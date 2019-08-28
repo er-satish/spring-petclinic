@@ -39,7 +39,6 @@ public class Visit extends BaseEntity {
     private LocalDate date;
 
     @NotEmpty
-    @Column(name = "description")
     private String description;
 
     private Integer petId;
