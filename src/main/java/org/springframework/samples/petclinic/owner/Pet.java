@@ -52,7 +52,6 @@ public class Pet extends NamedEntity {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthDate;
 
-    @JoinColumn(name = "type_id")
     private PetType type;
     /**
      * Pet need not save Owner to avoid cyclic dependency while persisting.
