@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import javax.validation.constraints.NotEmpty;
 import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PropertyComparator;
 import org.springframework.core.style.ToStringCreator;
+import org.springframework.data.redis.core.RedisHash;
 import org.springframework.samples.petclinic.model.Person;
 
 /**
@@ -42,23 +43,18 @@ import org.springframework.samples.petclinic.model.Person;
  * @author Sam Brannen
  * @author Michael Isvy
  */
-@Entity
-@Table(name = "owners")
+@RedisHash("owners")
 public class Owner extends Person {
-    @Column(name = "address")
     @NotEmpty
     private String address;
 
-    @Column(name = "city")
     @NotEmpty
     private String city;
 
-    @Column(name = "telephone")
     @NotEmpty
     @Digits(fraction = 0, integer = 10)
     private String telephone;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner")
     private Set<Pet> pets;
 
     public String getAddress() {
@@ -106,8 +102,14 @@ public class Owner extends Person {
     public void addPet(Pet pet) {
         if (pet.isNew()) {
             getPetsInternal().add(pet);
+        }else{
+            this.pets.add(pet);
         }
         pet.setOwner(this);
+    }
+
+    public void addPets(List<Pet> pets) {
+        this.getPetsInternal().addAll(pets);
     }
 
     /**

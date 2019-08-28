@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,9 @@
  */
 package org.springframework.samples.petclinic.owner;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,12 +30,11 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PropertyComparator;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.redis.core.RedisHash;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.model.NamedEntity;
 import org.springframework.samples.petclinic.visit.Visit;
@@ -47,31 +46,29 @@ import org.springframework.samples.petclinic.visit.Visit;
  * @author Juergen Hoeller
  * @author Sam Brannen
  */
-@Entity
-@Table(name = "pets")
+@RedisHash("pets")
 public class Pet extends NamedEntity {
 
-    @Column(name = "birth_date")
-    @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date birthDate;
+    private LocalDate birthDate;
 
-    @ManyToOne
     @JoinColumn(name = "type_id")
     private PetType type;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
+    /**
+     * Pet need not save Owner to avoid cyclic dependency while persisting.
+     */
+    @Transient
     private Owner owner;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "petId", fetch = FetchType.EAGER)
+    private Integer ownerId;
+
     private Set<Visit> visits = new LinkedHashSet<>();
 
-    public void setBirthDate(Date birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
-    public Date getBirthDate() {
+    public LocalDate getBirthDate() {
         return this.birthDate;
     }
 
@@ -89,6 +86,7 @@ public class Pet extends NamedEntity {
 
     protected void setOwner(Owner owner) {
         this.owner = owner;
+        this.ownerId = owner.getId();
     }
 
     protected Set<Visit> getVisitsInternal() {
